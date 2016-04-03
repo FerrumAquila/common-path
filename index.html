@@ -38,25 +38,31 @@
 
     initMap = (function() {
         directionsService = new google.maps.DirectionsService;
-        directionsDisplayRoute1 = new google.maps.DirectionsRenderer;
-        directionsDisplayRoute2 = new google.maps.DirectionsRenderer;
         bounds = new google.maps.LatLngBounds();
         markers = [];
+        polylines = [
+            new google.maps.Polyline({
+              path: [],
+              strokeColor: "#ff0000",
+              strokeWeight: 3
+            }),
+            new google.maps.Polyline({
+              path: [],
+              strokeColor: "#0000ff",
+              strokeWeight: 3
+            })
+        ]
+
 
         map = new google.maps.Map(document.getElementById('map'), {
             zoom: 16,
             center: {lat: 19.117, lng: 72.905}
         });
 
-        directionsDisplayRoute1.setMap(map);
-        directionsDisplayRoute2.setMap(map);
-
-        directionsDisplayRoutes = [directionsDisplayRoute1, directionsDisplayRoute2]
-
         map.addListener('click', function(event) {
             var routeNo = addMarker(event.latLng);
             if(routeNo){
-                onClickRouteHandler(routeNo);
+                calculateAndDisplayRoute(directionsService, routeNo);
             }
         });
 
@@ -69,22 +75,40 @@
     });
 
 
-    onClickRouteHandler = (function(routeNo) {
+    calculateAndDisplayRoute = (function(directionsService, routeNo) {
         startId = routeNo * 2 - 2;
         endId = routeNo * 2 - 1;
         var start = getLatLngLiteral(markers[startId]);
         var end = getLatLngLiteral(markers[endId]);
-        var directionsDisplayRoute = directionsDisplayRoutes[routeNo - 1]
-        calculateAndDisplayRoute(directionsService, directionsDisplayRoute, start, end);
-    });
-
-
-    calculateAndDisplayRoute = (function(directionsService, directionsDisplay, start, end) {
         directionsService.route(
             { origin: start, destination: end, travelMode: google.maps.TravelMode.DRIVING },
-            function(response, status) {
+            function(result, status) {
                 if (status === google.maps.DirectionsStatus.OK) {
-                    directionsDisplay.setDirections(response);
+                    var renderer = new google.maps.DirectionsRenderer({
+                        draggable: false,
+                        polylineOptions: {
+                            strokeColor: "#00ff00",
+                            strokeWeight: 1
+                        },
+                        map: map
+                    });
+                    var path = result.routes[0].overview_path;
+                    var legs = result.routes[0].legs;
+                    for (i = 0; i < legs.length; i++) {
+                        var steps = legs[i].steps;
+                        for (j = 0; j < steps.length; j++) {
+                            var nextSegment = steps[j].path;
+                            for (k = 0; k < nextSegment.length; k++) {
+                                polylines[0].getPath().push(nextSegment[k]);
+                                bounds.extend(nextSegment[k]);
+                            }
+                        }
+                    }
+                    // polylines[0].setMap(map);
+                    if (polylines[1].getPath().getLength() > 1) {
+                        getPolylineIntersection();
+                    }
+                    renderer.setDirections(result);
                 } else {
                     window.alert('Directions request failed due to ' + status);
                 }
@@ -95,7 +119,7 @@
 
     addMarker = (function(location) {
         var marker = new google.maps.Marker({ position: location, map: map });
-        if(markers.length < 4){
+        if(markers.length < (polylines.length * 2)){
             markers.push(marker);
             isEndPoint = !(markers.length % 2);
             if(isEndPoint){
@@ -105,7 +129,7 @@
                 routeNo = 0;
             }
         }else{
-            alert('four locations selected\nplease refresh to enter again');
+            alert('max locations selected\nplease refresh to enter again');
         }
         return routeNo;
     });
@@ -126,7 +150,6 @@
         clearMarkers();
         markers = [];
     });
-
 
 
 </script>
