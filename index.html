@@ -64,6 +64,9 @@
                 calculateAndDisplayRoute(directionsService, routeNo);
             }
         });
+
+        alert('please enter route 1 by selecting start and end point');
+
     })
 
 
@@ -156,7 +159,7 @@
             isEndPoint = !(markers.length % 2);
             if(isEndPoint){
                 routeNo = parseInt(markers.length / 2);
-                alert('route ' + routeNo + ' selected')
+                alert('please enter next route by selecting starting and end point')
             }else{
                 routeNo = 0;
             }
