@@ -87,8 +87,8 @@
                     var renderer = new google.maps.DirectionsRenderer({
                         draggable: false,
                         polylineOptions: {
-                            strokeColor: "#00ff00",
-                            strokeWeight: 1
+                            strokeColor: polylines[routeNo - 1].strokeColor,
+                            strokeWeight: polylines[routeNo - 1].strokeWeight
                         },
                         map: map
                     });
