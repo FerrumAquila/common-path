@@ -53,10 +53,9 @@
             })
         ]
 
-
         map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 16,
-            center: {lat: 19.117, lng: 72.905}
+            zoom: 17,
+            center: {lat: 19.1183, lng: 72.9061}
         });
 
         map.addListener('click', function(event) {
@@ -65,7 +64,6 @@
                 calculateAndDisplayRoute(directionsService, routeNo);
             }
         });
-
     })
 
 
@@ -99,13 +97,12 @@
                         for (j = 0; j < steps.length; j++) {
                             var nextSegment = steps[j].path;
                             for (k = 0; k < nextSegment.length; k++) {
-                                polylines[0].getPath().push(nextSegment[k]);
+                                polylines[routeNo - 1].getPath().push(nextSegment[k]);
                                 bounds.extend(nextSegment[k]);
                             }
                         }
                     }
-                    // polylines[0].setMap(map);
-                    if (polylines[1].getPath().getLength() > 1) {
+                    if (routeNo > 1) {
                         getPolylineIntersection();
                     }
                     renderer.setDirections(result);
@@ -114,6 +111,41 @@
                 }
             }
         );
+    });
+
+
+    getPolylineIntersection = (function() {
+        commonPts = [];
+        for (var i = 0; i < polylines[0].getPath().getLength(); i++) {
+            for (var j = 0; j < polylines[1].getPath().getLength(); j++) {
+                if (polylines[0].getPath().getAt(i).equals(polylines[1].getPath().getAt(j))) {
+                    ptOption = {
+                        lat: polylines[1].getPath().getAt(j).lat(),
+                        lng: polylines[1].getPath().getAt(j).lng(),
+                        routeId: i
+                    }
+                    console.log(ptOption);
+                    commonPts.push(ptOption);
+                }
+            }
+        }
+        var path = [];
+        var prevIdx = commonPts[0].routeId;
+        for (var i = 0; i < commonPts.length; i++) {
+            if (commonPts[i].routeId <= prevIdx + 1) {
+                path.push(commonPts[i]);
+                prevIdx = commonPts[i].routeId;
+            } else {
+                path = [];
+                prevIdx = commonPts[i].routeId;
+            }
+        }
+        var polyline = new google.maps.Polyline({
+            map: map,
+            path: path,
+            strokeWeight: 8,
+            strokeColor: "#00ff00"
+        });
     });
 
 
